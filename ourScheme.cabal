@@ -27,7 +27,8 @@ executable ourScheme
     -- Modules included in this executable, other than Main.
     other-modules:
         OurScheme.AST,
-        OurScheme.Eval
+        OurScheme.Eval,
+        OurScheme.Parser
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -37,6 +38,7 @@ executable ourScheme
 		      containers,
 	              text,
 	              megaparsec,
+	              parser-combinators,
 	              haskeline
     hs-source-dirs:   app
     default-language: Haskell2010
