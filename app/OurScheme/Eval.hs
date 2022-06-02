@@ -44,20 +44,25 @@ instance Show Result where
   show (RText l) = show l
 
 eval :: SExp -> Either T.Text Result
-eval = runEnv . eval'
+eval = fmap sexpToResult . runEnv . normalize
 
-eval' :: (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) => SExp -> m Result
-eval' s@(SLit _) = pure $ sexpToResult s
-eval' (SSym sym)= do
+normalize :: (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) => SExp -> m SExp
+normalize exp@(SLit _)= pure exp
+normalize (SSym sym)= do
     v <- reader @"binds" $ lookup sym
     case v of
-      Just v' -> pure $ sexpToResult v'
+      Just v' -> normalize v'
       Nothing -> throwError $ "no such symbol: " <> (T.pack . show) sym
-eval' (SLet binds bodies) = local @"binds" (binds <>) $ foldr1 (>>) $ fmap eval' $ bodies
+normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
+  where
+    singleLet bind bodies' = do
+      nb <- mapM normalize bind
+      local @"binds" (nb :) bodies'
+    bodiesRun = foldr1 (>>) $ fmap normalize $ bodies
 
 sexpToResult :: SExp -> Result
-sexpToResult (SLit (LitInt i))= RInt i
-sexpToResult (SLit (LitText t))= RText t
+sexpToResult (SLit (LitInt i)) = RInt i
+sexpToResult (SLit (LitText t)) = RText t
 
 go = putStrLn $ T.unpack $ either ("Error: " <>) (T.pack . show) $ eval $
   SLet [(Symbol "x", (SLit $ LitText "88"))] $
