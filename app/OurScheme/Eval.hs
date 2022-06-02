@@ -43,8 +43,8 @@ instance Show Result where
   show (RInt l) = show l
   show (RText l) = show l
 
-eval :: SExp -> Either T.Text Result
-eval = fmap sexpToResult . runEnv . normalize
+eval :: SExp -> Either T.Text SExp
+eval = runEnv . normalize
 
 normalize :: (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) => SExp -> m SExp
 normalize exp@(SLit _)= pure exp
@@ -59,6 +59,7 @@ normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
       nb <- mapM normalize bind
       local @"binds" (nb :) bodies'
     bodiesRun = foldr1 (>>) $ fmap normalize $ bodies
+normalize (SDefSym sym sexp) = throwError "can not using define at here"
 
 sexpToResult :: SExp -> Result
 sexpToResult (SLit (LitInt i)) = RInt i

@@ -13,6 +13,7 @@ data SExp
   = SLit Literal
   | SSym Symbol
   | SLet [(Symbol, SExp)] (NonEmpty SExp)
+  | SDefSym Symbol SExp
   deriving (Show)
 
 data Literal = LitInt Int | LitText T.Text
