@@ -21,7 +21,9 @@ pSExp =
     [ pLiteral,
       SSym <$> pSymbol,
       try pLet,
-      try pDefSym
+      try pLambda,
+      try pDefSym,
+      try pApp
     ]
 
 pLiteral :: Parser SExp
@@ -35,6 +37,12 @@ pLiteral =
   where
     pLitInt = LitInt <$> L.decimal
     pLitText = LitText . T.pack <$> (symbol "\"" >> manyTill C.asciiChar (symbol "\""))
+
+pLambda :: Parser SExp
+pLambda = lexeme $ parens (pKeyword "lambda" >> SLambda <$> parens (many pSymbol) <*> NE.some pSExp <?> "LAMBDA")
+
+pApp :: Parser SExp
+pApp = lexeme $ parens (SApp <$> pSExp <*> many pSExp <?> "FUNC_APP")
 
 pLet :: Parser SExp
 pLet = lexeme $ parens ((pKeyword "let" >> SLet <$> parens pBinds <*> (pBody <?> "BODY")) <?> "LET")
