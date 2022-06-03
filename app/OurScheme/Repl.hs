@@ -19,7 +19,6 @@ import Text.Megaparsec
 repl :: IO (Either T.Text ())
 repl = do
   env <- blankEnv
-  T.putStrLn "Let's repl!"
   flip runEnvWith env . forever $ do
     liftIO $ T.putStr "> "
     cmd <- liftIO T.getLine
