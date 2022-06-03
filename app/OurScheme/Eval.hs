@@ -5,6 +5,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -20,7 +21,6 @@ import Control.Monad.Identity
 import Control.Monad.Reader (ReaderT (..), runReader)
 import Data.Functor
 import Data.IORef
-import Data.List.NonEmpty
 import qualified Data.Text as T
 import GHC.Generics
 import OurScheme.AST
@@ -66,6 +66,8 @@ normalize (SSym sym) = do
   case v of
     Just v' -> normalize v'
     Nothing -> throwError $ "no such symbol: " <> (T.pack . show) sym
+normalize (SApp f args) = applyFn f args
+normalize exp@(SLambda _ _) = pure exp
 normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
   where
     singleLet bind bodies' = do
@@ -73,3 +75,22 @@ normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
       local @"binds" (nb :) bodies'
     bodiesRun = foldr1 (>>) $ fmap normalize $ bodies
 normalize (SDefSym sym sexp) = throwError "can not using define at here"
+
+applyFn ::
+  (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) =>
+  SExp ->
+  [SExp] ->
+  m SExp
+applyFn f args =
+  normalize f >>= \case
+    (SLambda requiredArgs body) -> do
+      -- TODO This IDENTICAL to normaliztion of SLet, extract function from them.
+      unless (length args == length requiredArgs) $ throwError "incorrect number of arguments"
+      let binds = zip requiredArgs args
+      foldr singleLet bodiesRun binds
+      where
+        singleLet bind bodies' = do
+          nb <- mapM normalize bind
+          local @"binds" (nb :) bodies'
+        bodiesRun = foldr1 (>>) $ fmap normalize $ body
+    _ -> throwError "not a function"

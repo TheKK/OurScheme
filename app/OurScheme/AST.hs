@@ -1,17 +1,19 @@
 module OurScheme.AST
-  ( SExp(..)
-  , Literal(..)
-  , Symbol(..)
-  ) where
+  ( SExp (..),
+    Literal (..),
+    Symbol (..),
+  )
+where
 
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NonEmpty
-
 import qualified Data.Text as T
 
 data SExp
   = SLit Literal
   | SSym Symbol
+  | SApp SExp [SExp]
+  | SLambda [Symbol] (NonEmpty SExp)
   | SLet [(Symbol, SExp)] (NonEmpty SExp)
   | SDefSym Symbol SExp
   deriving (Show)
