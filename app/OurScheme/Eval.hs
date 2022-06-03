@@ -8,7 +8,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module OurScheme.Eval () where
+module OurScheme.Eval where
 
 import Capability.Reader
 import Capability.Sink
