@@ -20,8 +20,8 @@ pSExp =
   choice
     [ pLiteral,
       SSym <$> pSymbol,
-      pLet,
-      pDefSym
+      try pLet,
+      try pDefSym
     ]
 
 pLiteral :: Parser SExp
@@ -37,19 +37,19 @@ pLiteral =
     pLitText = LitText . T.pack <$> (symbol "\"" >> manyTill C.asciiChar (symbol "\""))
 
 pLet :: Parser SExp
-pLet = parens (lexeme1 "let" >> SLet <$> parens pBinds <*> (pBody <?> "BODY")) <?> "LET"
+pLet = lexeme $ parens ((pKeyword "let" >> SLet <$> parens pBinds <*> (pBody <?> "BODY")) <?> "LET")
   where
     pBinds = many (parens ((,) <$> lexeme pSymbol <*> pSExp) <?> "(SYMBOL SEXP)")
     pBody = NE.some pSExp
 
 pDefSym :: Parser SExp
-pDefSym = parens (lexeme1 "define" >> SDefSym <$> lexeme1 pSymbol <*> pSExp <?> "DEFINE")
+pDefSym = lexeme $ parens (pKeyword "define" >> SDefSym <$> pSymbol <*> pSExp <?> "DEFINE")
 
 pSymbol :: Parser Symbol
-pSymbol = Symbol . T.pack <$> some C.alphaNumChar <?> "SYMBOL"
+pSymbol = lexeme $ Symbol . T.pack <$> (some C.alphaNumChar <* notFollowedBy C.alphaNumChar <?> "SYMBOL")
 
 parens :: Parser a -> Parser a
-parens = try . between (symbol "(") (symbol ")")
+parens = between (symbol "(") (symbol ")")
 
 alphaChar :: Parser Char
 alphaChar = satisfy isAlpha <?> "alpha character"
@@ -57,13 +57,12 @@ alphaChar = satisfy isAlpha <?> "alpha character"
 space :: Parser ()
 space = L.space C.space1 (L.skipLineComment "--") mzero
 
+pKeyword :: T.Text -> Parser T.Text
+pKeyword p = lexeme (C.string p) <* notFollowedBy C.alphaNumChar
+
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme space
 {-# INLINE lexeme #-}
-
-lexeme1 :: Parser a -> Parser a
-lexeme1 p = L.lexeme space $ p <* " "
-{-# INLINE lexeme1 #-}
 
 symbol :: T.Text -> Parser T.Text
 symbol = L.symbol space
