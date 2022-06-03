@@ -60,15 +60,3 @@ normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
       local @"binds" (nb :) bodies'
     bodiesRun = foldr1 (>>) $ fmap normalize $ bodies
 normalize (SDefSym sym sexp) = throwError "can not using define at here"
-
-sexpToResult :: SExp -> Result
-sexpToResult (SLit (LitInt i)) = RInt i
-sexpToResult (SLit (LitText t)) = RText t
-
-go = putStrLn $ T.unpack $ either ("Error: " <>) (T.pack . show) $ eval $
-  SLet [(Symbol "x", (SLit $ LitText "88"))] $
-    (SLit $ LitInt 10) :|
-      [ (SLit $ LitInt 11)
-      , (SSym $ Symbol "gg")
-      , (SSym $ Symbol "x")
-      ]
