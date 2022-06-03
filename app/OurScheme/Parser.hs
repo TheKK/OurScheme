@@ -58,7 +58,7 @@ space :: Parser ()
 space = L.space C.space1 (L.skipLineComment "--") mzero
 
 pKeyword :: T.Text -> Parser T.Text
-pKeyword p = lexeme (C.string p) <* notFollowedBy C.alphaNumChar
+pKeyword p = lexeme (C.string p <* notFollowedBy C.alphaNumChar)
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme space
