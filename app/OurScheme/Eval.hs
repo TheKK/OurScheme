@@ -56,7 +56,7 @@ eval :: SExp -> IO (Either T.Text SExp)
 eval sexp = blankEnv >>= runEnvWith (normalize sexp)
 
 topLevelNormalize :: (MonadError T.Text m, HasState "binds" [(Symbol, SExp)] m, HasReader "binds" [(Symbol, SExp)] m) => SExp -> m SExp
-topLevelNormalize exp@(SDefSym sym sexp) = modify' @"binds" ((sym, sexp) :) >> pure exp
+topLevelNormalize exp@(SDefSym sym sexp) = normalize sexp >>= \sexp' -> modify' @"binds" ((sym, sexp') :) >> pure exp
 topLevelNormalize other = normalize other
 
 normalize :: (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) => SExp -> m SExp
