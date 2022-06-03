@@ -12,6 +12,7 @@ import qualified Data.Text as T
 data SExp
   = SLit Literal
   | SSym Symbol
+  | STrue
   | SApp SExp [SExp]
   | SLambda [Symbol] (NonEmpty SExp)
   | SLet [(Symbol, SExp)] (NonEmpty SExp)
