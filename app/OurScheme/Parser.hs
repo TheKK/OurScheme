@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OurScheme.Parser () where
+module OurScheme.Parser where
 
 import Control.Monad
 import qualified Control.Monad.Combinators.NonEmpty as NE
