@@ -38,7 +38,7 @@ repl = do
 
     incrementalParsing' prevCmd = do
       cmd <- (prevCmd <>) <$> liftIO T.getLine
-      case runParser (pSExp <* eof) "repl" cmd of
+      case runParser (space *> pSExp <* eof) "repl" cmd of
         Left err ->
           if isEndOfInputError err
             then incrementalParsing' (cmd <> "\n")
