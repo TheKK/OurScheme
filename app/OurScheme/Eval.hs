@@ -34,7 +34,7 @@ blankEnv :: IO Env
 blankEnv = Env <$> newIORef []
 
 newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
   deriving (MonadError T.Text)
   deriving
     (HasState "binds" [(Symbol, SExp)], HasSource "binds" [(Symbol, SExp)], HasSink "binds" [(Symbol, SExp)])
