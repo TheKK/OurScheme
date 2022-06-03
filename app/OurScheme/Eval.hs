@@ -21,6 +21,7 @@ import Control.Monad.Identity
 import Control.Monad.Reader (ReaderT (..), runReader)
 import Data.Functor
 import Data.IORef
+import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 import GHC.Generics
 import OurScheme.AST
@@ -68,12 +69,7 @@ normalize (SSym sym) = do
     Nothing -> throwError $ "no such symbol: " <> (T.pack . show) sym
 normalize (SApp f args) = applyFn f args
 normalize exp@(SLambda _ _) = pure exp
-normalize (SLet binds bodies) = foldr singleLet bodiesRun binds
-  where
-    singleLet bind bodies' = do
-      nb <- mapM normalize bind
-      local @"binds" (nb :) bodies'
-    bodiesRun = foldr1 (>>) $ fmap normalize $ bodies
+normalize (SLet binds bodies) = stackBindsAndRunBody binds bodies
 normalize (SDefSym sym sexp) = throwError "can not using define at here"
 
 applyFn ::
@@ -84,13 +80,15 @@ applyFn ::
 applyFn f args =
   normalize f >>= \case
     (SLambda requiredArgs body) -> do
-      -- TODO This IDENTICAL to normaliztion of SLet, extract function from them.
       unless (length args == length requiredArgs) $ throwError "incorrect number of arguments"
       let binds = zip requiredArgs args
-      foldr singleLet bodiesRun binds
-      where
-        singleLet bind bodies' = do
-          nb <- mapM normalize bind
-          local @"binds" (nb :) bodies'
-        bodiesRun = foldr1 (>>) $ fmap normalize $ body
+      stackBindsAndRunBody binds body
     _ -> throwError "not a function"
+
+stackBindsAndRunBody :: (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) => [(Symbol, SExp)] -> NonEmpty SExp -> m SExp
+stackBindsAndRunBody binds body = foldr singleLet bodiesRun binds
+  where
+    singleLet bind bodies' = do
+      nb <- mapM normalize bind
+      local @"binds" (nb :) bodies'
+    bodiesRun = foldr1 (>>) $ normalize <$> body
