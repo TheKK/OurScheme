@@ -15,6 +15,7 @@ where
 import Capability.Reader
 import Capability.Sink
 import Capability.Source
+import System.Console.Haskeline
 import Capability.State
 import Control.Monad
 import Control.Monad.Error.Class
@@ -30,6 +31,7 @@ import OurScheme.AST
 import OurScheme.Eval
 import OurScheme.Parser
 import Text.Megaparsec
+import Control.Monad.Catch (MonadMask)
 
 data Env = Env
   { envBinds :: IORef [(Symbol, SExp)]
@@ -39,18 +41,18 @@ data Env = Env
 blankEnv :: IO Env
 blankEnv = Env <$> newIORef []
 
-newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
+newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text (InputT m)) a)
   deriving (Functor, Applicative, Monad, MonadIO)
   deriving (MonadError T.Text)
   deriving
     (HasState "binds" [(Symbol, SExp)], HasSource "binds" [(Symbol, SExp)], HasSink "binds" [(Symbol, SExp)])
-    via (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text m))))))
+    via (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text (InputT m)))))))
   deriving
     (HasReader "binds" [(Symbol, SExp)])
-    via (ReadStatePure (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text m)))))))
+    via (ReadStatePure (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text (InputT m))))))))
 
-runEnvWith :: EnvT m a -> Env -> m (Either T.Text a)
-runEnvWith (EnvT m) env = runExceptT $ runReaderT m env
+runEnvWith :: (MonadIO m, MonadMask m) => EnvT m a -> Env -> m (Either T.Text a)
+runEnvWith (EnvT m) env = runInputT defaultSettings $ runExceptT $ runReaderT m env
 
 repl :: IO (Either T.Text ())
 repl = do
