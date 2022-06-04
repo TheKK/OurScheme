@@ -36,6 +36,7 @@ executable ourScheme
     build-depends:    base >=4.14 && <5.0,
                       capability,
                       mtl,
+                      exceptions,
 		      containers,
 	              text,
 	              megaparsec,
