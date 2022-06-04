@@ -47,12 +47,6 @@ newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
 runEnvWith :: EnvT m a -> Env -> m (Either T.Text a)
 runEnvWith (EnvT m) env = runExceptT $ runReaderT m env
 
-data Result = RInt Int | RText T.Text
-
-instance Show Result where
-  show (RInt l) = show l
-  show (RText l) = show l
-
 eval :: SExp -> IO (Either T.Text SExp)
 eval sexp = blankEnv >>= runEnvWith (normalize sexp)
 
