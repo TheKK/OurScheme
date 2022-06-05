@@ -14,9 +14,9 @@ import OurScheme.AST
 stdBuiltins :: [(Symbol, SExp)]
 stdBuiltins =
   fmap SBuiltin
-    <$> [ (Symbol "add", builtinAdd),
-          (Symbol "minus", builtinMinus),
-          (Symbol "lt", builtinLessThan)
+    <$> [ (Symbol "+", builtinAdd),
+          (Symbol "-", builtinMinus),
+          (Symbol "<", builtinLessThan)
         ]
 
 builtinAdd :: BuiltinsImpl
