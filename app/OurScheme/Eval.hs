@@ -21,6 +21,7 @@ import Data.Kind (Type)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 import OurScheme.AST
+import Data.Maybe
 
 data Binds
 
@@ -31,7 +32,12 @@ type instance TypeOf Type Binds = [(Symbol, SExp)]
 type instance TypeOf Type Builtins = [(Symbol, SExp)]
 
 topLevelNormalize :: (MonadError T.Text m, HasState' Binds m, HasReader' Binds m, HasReader' Builtins m) => SExp -> m SExp
-topLevelNormalize exp@(SDefSym sym sexp) = normalize sexp >>= \sexp' -> modify' @Binds ((sym, sexp') :) >> pure sexp'
+topLevelNormalize exp@(SDefSym sym@(Symbol symText) sexp') = do
+  sexp <- normalize sexp'
+  conflictWithBuiltins <- asks @Builtins (isJust . lookup sym)
+  if conflictWithBuiltins
+    then throwError $ "conflict with builtins: " <> symText
+    else modify' @Binds ((sym, sexp) :) >> pure sexp
 topLevelNormalize other = normalize other
 
 normalize :: (MonadError T.Text m, HasReader' Binds m, HasReader' Builtins m) => SExp -> m SExp
