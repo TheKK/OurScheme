@@ -14,12 +14,13 @@ where
 
 import Capability.Reader
 import Capability.State
+import Control.Applicative
 import Control.Monad.Except
+import Data.Function
 import Data.Kind (Type)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 import OurScheme.AST
-import Control.Applicative
 
 data Binds
 
@@ -45,6 +46,7 @@ normalize exp@STrue = pure exp
 normalize exp@SNil = pure exp
 normalize (SApp f args) = applyFn f args
 normalize exp@(SLambda _ _) = pure exp
+normalize exp@(SBuiltin _) = pure exp
 normalize (SLet binds bodies) = stackBindsAndRunBody binds bodies
 normalize (SIf cond' t' nil') = do
   cond <- normalize cond'
@@ -68,6 +70,14 @@ applyFn f args =
       unless (length args == length requiredArgs) $ throwError "incorrect number of arguments"
       let binds = zip requiredArgs args
       stackBindsAndRunBody binds body
+    (SBuiltin (BuiltinsImpl impl)) ->
+      mapM normalize args
+        >>= ( \normArgs ->
+                impl normArgs & \case
+                  Left e -> throwError e
+                  Right v -> pure v
+            )
+        >>= normalize
     _ -> throwError "not a function"
 
 stackBindsAndRunBody :: (MonadError T.Text m, HasReader' Binds m, HasReader' Builtins m) => [(Symbol, SExp)] -> NonEmpty SExp -> m SExp

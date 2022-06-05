@@ -2,6 +2,7 @@ module OurScheme.AST
   ( SExp (..),
     Literal (..),
     Symbol (..),
+    BuiltinsImpl (..),
   )
 where
 
@@ -16,6 +17,7 @@ data SExp
   | SNil
   | SApp SExp [SExp]
   | SLambda [Symbol] (NonEmpty SExp)
+  | SBuiltin BuiltinsImpl
   | SLet [(Symbol, SExp)] (NonEmpty SExp)
   | SIf SExp SExp SExp
   | SDefSym Symbol SExp
@@ -30,3 +32,8 @@ instance Show Literal where
 
 newtype Symbol = Symbol T.Text
   deriving (Show, Eq)
+
+newtype BuiltinsImpl = BuiltinsImpl ([SExp] -> Either T.Text SExp)
+
+instance Show BuiltinsImpl where
+  show _ = "builtin"
