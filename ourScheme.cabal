@@ -29,7 +29,8 @@ executable ourScheme
         OurScheme.AST,
         OurScheme.Eval,
         OurScheme.Parser,
-        OurScheme.Repl
+        OurScheme.Repl,
+        OurScheme.Builtins
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

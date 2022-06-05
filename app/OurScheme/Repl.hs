@@ -30,6 +30,7 @@ import qualified Data.Text as T
 import Data.Void
 import GHC.Generics
 import OurScheme.AST
+import OurScheme.Builtins
 import OurScheme.Eval
 import OurScheme.Parser
 import System.Console.Haskeline
@@ -42,7 +43,7 @@ data Env = Env
   deriving (Generic)
 
 blankEnv :: IO Env
-blankEnv = Env <$> newIORef [] <*> newIORef []
+blankEnv = Env <$> newIORef [] <*> newIORef stdBuiltins
 
 newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
   deriving (Functor, Applicative, Monad, MonadIO)
