@@ -36,12 +36,13 @@ import System.Console.Haskeline
 import Text.Megaparsec
 
 data Env = Env
-  { envBinds :: IORef [(Symbol, SExp)]
+  { envBinds :: IORef [(Symbol, SExp)],
+    globalBuiltins :: IORef [(Symbol, SExp)]
   }
   deriving (Generic)
 
 blankEnv :: IO Env
-blankEnv = Env <$> newIORef []
+blankEnv = Env <$> newIORef [] <*> newIORef []
 
 newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
   deriving (Functor, Applicative, Monad, MonadIO)
@@ -53,6 +54,12 @@ newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
   deriving
     (HasReader Binds [(Symbol, SExp)])
     via (ReadStatePure (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text m)))))))
+  deriving
+    (HasState Builtins [(Symbol, SExp)], HasSource Builtins [(Symbol, SExp)], HasSink Builtins [(Symbol, SExp)])
+    via (ReaderIORef (Rename "globalBuiltins" (Field "globalBuiltins" () (MonadReader (ReaderT Env (ExceptT T.Text m))))))
+  deriving
+    (HasReader Builtins [(Symbol, SExp)])
+    via (ReadStatePure (ReaderIORef (Rename "globalBuiltins" (Field "globalBuiltins" () (MonadReader (ReaderT Env (ExceptT T.Text m)))))))
 
 runEnvWith :: (MonadIO m, MonadMask m) => EnvT m a -> Env -> m (Either T.Text a)
 runEnvWith (EnvT m) env = runExceptT $ runReaderT m env

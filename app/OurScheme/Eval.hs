@@ -7,7 +7,8 @@
 
 module OurScheme.Eval
   ( topLevelNormalize,
-    Binds(..),
+    Binds (..),
+    Builtins (..),
   )
 where
 
@@ -18,20 +19,26 @@ import Data.Kind (Type)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Text as T
 import OurScheme.AST
+import Control.Applicative
 
 data Binds
 
+data Builtins
+
 type instance TypeOf Type Binds = [(Symbol, SExp)]
 
-topLevelNormalize :: (MonadError T.Text m, HasState' Binds m, HasReader' Binds m) => SExp -> m SExp
+type instance TypeOf Type Builtins = [(Symbol, SExp)]
+
+topLevelNormalize :: (MonadError T.Text m, HasState' Binds m, HasReader' Binds m, HasReader' Builtins m) => SExp -> m SExp
 topLevelNormalize exp@(SDefSym sym sexp) = normalize sexp >>= \sexp' -> modify' @Binds ((sym, sexp') :) >> pure sexp'
 topLevelNormalize other = normalize other
 
-normalize :: (MonadError T.Text m, HasReader' Binds m) => SExp -> m SExp
+normalize :: (MonadError T.Text m, HasReader' Binds m, HasReader' Builtins m) => SExp -> m SExp
 normalize exp@(SLit _) = pure exp
 normalize (SSym sym) = do
-  v <- reader @Binds $ lookup sym
-  case v of
+  builtin <- reader @Builtins $ lookup sym
+  bind <- reader @Binds $ lookup sym
+  case builtin <|> bind of
     Just v' -> normalize v'
     Nothing -> throwError $ "no such symbol: " <> (T.pack . show) sym
 normalize exp@STrue = pure exp
@@ -51,7 +58,7 @@ isNil SNil = True
 isNil _ = False
 
 applyFn ::
-  (MonadError T.Text m, HasReader' Binds m) =>
+  (MonadError T.Text m, HasReader' Binds m, HasReader' Builtins m) =>
   SExp ->
   [SExp] ->
   m SExp
@@ -63,7 +70,7 @@ applyFn f args =
       stackBindsAndRunBody binds body
     _ -> throwError "not a function"
 
-stackBindsAndRunBody :: (MonadError T.Text m, HasReader' Binds m) => [(Symbol, SExp)] -> NonEmpty SExp -> m SExp
+stackBindsAndRunBody :: (MonadError T.Text m, HasReader' Binds m, HasReader' Builtins m) => [(Symbol, SExp)] -> NonEmpty SExp -> m SExp
 stackBindsAndRunBody binds body = foldr singleLet bodiesRun binds
   where
     singleLet bind bodies' = do
