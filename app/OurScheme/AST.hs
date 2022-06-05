@@ -17,6 +17,7 @@ data SExp
   | SApp SExp [SExp]
   | SLambda [Symbol] (NonEmpty SExp)
   | SLet [(Symbol, SExp)] (NonEmpty SExp)
+  | SIf SExp SExp SExp
   | SDefSym Symbol SExp
   deriving (Show)
 

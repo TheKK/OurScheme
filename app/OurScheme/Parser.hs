@@ -23,6 +23,7 @@ pSExp =
       pNil,
       SSym <$> pSymbol,
       try pLet,
+      try pIf,
       try pLambda,
       try pDefSym,
       try pApp
@@ -51,6 +52,9 @@ pLet = lexeme $ parens ((pKeyword "let" >> SLet <$> parens pBinds <*> (pBody <?>
   where
     pBinds = many (parens ((,) <$> lexeme pSymbol <*> pSExp) <?> "(SYMBOL SEXP)")
     pBody = NE.some pSExp
+
+pIf :: Parser SExp
+pIf = lexeme $ parens ((pKeyword "if" >> SIf <$> pSExp <*> pSExp <*> pSExp) <?> "IF")
 
 pDefSym :: Parser SExp
 pDefSym = lexeme $ parens (pKeyword "define" >> SDefSym <$> pSymbol <*> pSExp <?> "DEFINE")

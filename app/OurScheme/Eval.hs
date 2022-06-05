@@ -32,7 +32,16 @@ normalize exp@SNil = pure exp
 normalize (SApp f args) = applyFn f args
 normalize exp@(SLambda _ _) = pure exp
 normalize (SLet binds bodies) = stackBindsAndRunBody binds bodies
+normalize (SIf cond' t' nil') = do
+  cond <- normalize cond'
+  normalize $ if isNil cond then nil' else t'
 normalize (SDefSym sym sexp) = throwError "can not using define at here"
+
+-- TODO Now we have some potential issue: we watn input SExp be normalized
+-- but we can't distinguish them now. Maybe wrapping them in newtype would work.
+isNil :: SExp -> Bool
+isNil SNil = True
+isNil _ = False
 
 applyFn ::
   (MonadError T.Text m, HasReader "binds" [(Symbol, SExp)] m) =>
