@@ -38,12 +38,6 @@ builtinMinus = BuiltinsImpl $ \args' -> do
         [n] -> - n
         n : ns -> foldl' (-) n ns
 
-builtinLessThan :: BuiltinsImpl
-builtinLessThan = builtinBinaryCondition (<)
-
-builtinGreaterThan :: BuiltinsImpl
-builtinGreaterThan = builtinBinaryCondition (>)
-
 builtinBinaryCondition :: (Int -> Int -> Bool) -> BuiltinsImpl
 builtinBinaryCondition f = builtinBinaryArithmetic $ \a b ->
   if f a b then STrue else SNil
