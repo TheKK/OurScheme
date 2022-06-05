@@ -39,7 +39,7 @@ pLiteral =
         ]
   where
     pLitInt = LitInt <$> L.decimal
-    pLitText = LitText . T.pack <$> (symbol "\"" >> manyTill C.asciiChar (symbol "\""))
+    pLitText = LitText . T.pack <$> (C.char '"' >> manyTill C.asciiChar (C.char '"'))
 
 pLambda :: Parser SExp
 pLambda = lexeme $ parens (pKeyword "lambda" >> SLambda <$> parens (many pSymbol) <*> NE.some pSExp <?> "LAMBDA")
