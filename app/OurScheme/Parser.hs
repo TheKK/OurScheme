@@ -68,7 +68,7 @@ pNil = lexeme $ SNil <$ choice [pKeyword "nil", pKeyword "#f", pKeyword "()"]
 pSymbol :: Parser Symbol
 pSymbol = lexeme $ Symbol . T.pack <$> (some pSymolChar <* notFollowedBy pSymolChar <?> "SYMBOL")
   where
-    pSymolChar = C.alphaNumChar <|> C.symbolChar
+    pSymolChar = C.alphaNumChar <|> C.symbolChar <|> C.char '-'
 
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
