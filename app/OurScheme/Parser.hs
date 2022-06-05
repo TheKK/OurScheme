@@ -50,7 +50,7 @@ pApp = lexeme $ parens (SApp <$> pSExp <*> many pSExp <?> "FUNC_APP")
 pLet :: Parser SExp
 pLet = lexeme $ parens ((pKeyword "let" >> SLet <$> parens pBinds <*> (pBody <?> "BODY")) <?> "LET")
   where
-    pBinds = many (parens ((,) <$> lexeme pSymbol <*> pSExp) <?> "(SYMBOL SEXP)")
+    pBinds = many (parens ((,) <$> pSymbol <*> pSExp) <?> "(SYMBOL SEXP)")
     pBody = NE.some pSExp
 
 pIf :: Parser SExp
