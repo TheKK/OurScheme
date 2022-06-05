@@ -20,6 +20,7 @@ pSExp =
   choice
     [ pLiteral,
       pTrue,
+      pNil,
       SSym <$> pSymbol,
       try pLet,
       try pLambda,
@@ -56,6 +57,9 @@ pDefSym = lexeme $ parens (pKeyword "define" >> SDefSym <$> pSymbol <*> pSExp <?
 
 pTrue :: Parser SExp
 pTrue = lexeme $ STrue <$ choice [pKeyword "t", pKeyword "#t"]
+
+pNil :: Parser SExp
+pNil = lexeme $ SNil <$ choice [pKeyword "nil", pKeyword "#f", pKeyword "()"]
 
 pSymbol :: Parser Symbol
 pSymbol = lexeme $ Symbol . T.pack <$> (some C.alphaNumChar <* notFollowedBy C.alphaNumChar <?> "SYMBOL")

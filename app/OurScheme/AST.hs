@@ -13,6 +13,7 @@ data SExp
   = SLit Literal
   | SSym Symbol
   | STrue
+  | SNil
   | SApp SExp [SExp]
   | SLambda [Symbol] (NonEmpty SExp)
   | SLet [(Symbol, SExp)] (NonEmpty SExp)

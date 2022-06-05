@@ -28,6 +28,7 @@ normalize (SSym sym) = do
     Just v' -> normalize v'
     Nothing -> throwError $ "no such symbol: " <> (T.pack . show) sym
 normalize exp@STrue = pure exp
+normalize exp@SNil = pure exp
 normalize (SApp f args) = applyFn f args
 normalize exp@(SLambda _ _) = pure exp
 normalize (SLet binds bodies) = stackBindsAndRunBody binds bodies
