@@ -31,10 +31,12 @@ builtinAdd = BuiltinsImpl $ \args' -> do
 builtinMinus :: BuiltinsImpl
 builtinMinus = BuiltinsImpl $ \args' -> do
   args <- mapM getInt args'
-  pure $ SLit $ LitInt $ case args of
-    [] -> 0
-    [n] -> -n
-    n:ns -> foldl' (-) n ns
+  pure $
+    SLit $
+      LitInt $ case args of
+        [] -> 0
+        [n] -> - n
+        n : ns -> foldl' (-) n ns
 
 builtinLessThan :: BuiltinsImpl
 builtinLessThan = builtinBinaryCondition (<)
