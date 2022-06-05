@@ -48,10 +48,10 @@ newtype EnvT m a = EnvT (ReaderT Env (ExceptT T.Text m) a)
   deriving (MonadThrow, MonadCatch, MonadMask)
   deriving (MonadError T.Text)
   deriving
-    (HasState "binds" [(Symbol, SExp)], HasSource "binds" [(Symbol, SExp)], HasSink "binds" [(Symbol, SExp)])
+    (HasState Binds [(Symbol, SExp)], HasSource Binds [(Symbol, SExp)], HasSink Binds [(Symbol, SExp)])
     via (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text m))))))
   deriving
-    (HasReader "binds" [(Symbol, SExp)])
+    (HasReader Binds [(Symbol, SExp)])
     via (ReadStatePure (ReaderIORef (Rename "envBinds" (Field "envBinds" () (MonadReader (ReaderT Env (ExceptT T.Text m)))))))
 
 runEnvWith :: (MonadIO m, MonadMask m) => EnvT m a -> Env -> m (Either T.Text a)
