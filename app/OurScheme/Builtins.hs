@@ -16,7 +16,11 @@ stdBuiltins =
   fmap SBuiltin
     <$> [ (Symbol "+", builtinAdd),
           (Symbol "-", builtinMinus),
-          (Symbol "<", builtinLessThan)
+          (Symbol "<", builtinBinaryCondition (<)),
+          (Symbol "<=", builtinBinaryCondition (<=)),
+          (Symbol ">", builtinBinaryCondition (>)),
+          (Symbol ">=", builtinBinaryCondition (>=)),
+          (Symbol "=", builtinBinaryCondition (==))
         ]
 
 builtinAdd :: BuiltinsImpl
@@ -33,11 +37,21 @@ builtinMinus = BuiltinsImpl $ \args' -> do
     n:ns -> foldl' (-) n ns
 
 builtinLessThan :: BuiltinsImpl
-builtinLessThan = BuiltinsImpl $ \args' -> do
+builtinLessThan = builtinBinaryCondition (<)
+
+builtinGreaterThan :: BuiltinsImpl
+builtinGreaterThan = builtinBinaryCondition (>)
+
+builtinBinaryCondition :: (Int -> Int -> Bool) -> BuiltinsImpl
+builtinBinaryCondition f = builtinBinaryArithmetic $ \a b ->
+  if f a b then STrue else SNil
+
+builtinBinaryArithmetic :: (Int -> Int -> SExp) -> BuiltinsImpl
+builtinBinaryArithmetic f = BuiltinsImpl $ \args' -> do
   when (length args' /= 2) $ Left "wrong number of arguments"
   args <- mapM getInt args'
   let (a : b : _) = args
-  pure $ if a < b then STrue else SNil
+  pure $ f a b
 
 getInt :: SExp -> Either T.Text Int
 getInt (SLit (LitInt i)) = pure i
