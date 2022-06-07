@@ -22,7 +22,9 @@ stdBuiltins =
           (Symbol "<=", builtinBinaryCondition (<=)),
           (Symbol ">", builtinBinaryCondition (>)),
           (Symbol ">=", builtinBinaryCondition (>=)),
-          (Symbol "=", builtinBinaryCondition (==))
+          (Symbol "=", builtinBinaryCondition (==)),
+          (Symbol "and", builtinAnd),
+          (Symbol "or", builtinOr)
         ]
 
 builtinMinus :: BuiltinsImpl
@@ -32,7 +34,7 @@ builtinMinus = BuiltinsImpl $ \args' -> do
     SLit $
       LitInt $ case args of
         [] -> 0
-        [n] -> - n
+        [n] -> -n
         n : ns -> foldl' (-) n ns
 
 builtinDivision :: BuiltinsImpl
@@ -51,6 +53,12 @@ builtinFoldInts f = BuiltinsImpl $ \args' -> do
   args <- mapM getInt args'
   pure $ SLit $ LitInt $ f args
 
+builtinAnd :: BuiltinsImpl
+builtinAnd = BuiltinsImpl $ pure . foldl' sExpAnd STrue
+
+builtinOr :: BuiltinsImpl
+builtinOr = BuiltinsImpl $ pure . foldl' sExpOr SNil
+
 builtinBinaryCondition :: (Int -> Int -> Bool) -> BuiltinsImpl
 builtinBinaryCondition f = builtinBinaryArithmetic $ \a b ->
   if f a b then STrue else SNil
@@ -62,9 +70,19 @@ builtinBinaryArithmetic f = BuiltinsImpl $ \args' -> do
   let (a : b : _) = args
   pure $ f a b
 
+sExpAnd :: SExp -> SExp -> SExp
+sExpAnd l r = if isNil l then SNil else r
+
+sExpOr :: SExp -> SExp -> SExp
+sExpOr l r = if not $ isNil l then l else r
+
 getInt :: SExp -> Either T.Text Int
 getInt (SLit (LitInt i)) = pure i
 getInt _ = throwTypeError "int"
+
+isNil :: SExp -> Bool
+isNil SNil = True
+isNil _ = False
 
 throwTypeError :: MonadError T.Text m => T.Text -> m a
 throwTypeError = throwError . ("type error: " <>)
